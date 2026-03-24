@@ -26,7 +26,7 @@ app.use("/reviews", reviewRoutes);
 
 (async () => {
   try {
-    await sequelize.sync({ alter: true });
+    await sequelize.sync();
     
     // Seed only if products are empty
     const { Product, DressStyle, Review } = require("./models");
