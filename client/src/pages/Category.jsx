@@ -77,7 +77,7 @@ export default function Category() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:5000/products?category=${name}`)
+    fetch(`https://shopco-ecommerce-1-6ccc.onrender.com/products?category=${name}`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) setProducts(data);
