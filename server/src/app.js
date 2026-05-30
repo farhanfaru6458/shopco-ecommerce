@@ -101,15 +101,15 @@ app.use("/reviews", reviewRoutes);
     const { Product, DressStyle, Review } = require("./models");
     const productCount = await Product.count();
     if (productCount === 0) {
-      // await seedProducts();
-      // await seedDressStyles();
+      await seedProducts();
+      await seedDressStyles();
       console.log("Basic data seeded");
     }
 
     const reviewCount = await Review.count();
     if (reviewCount === 0) {
-      // await seedReviews();
-      console.log(" Reviews seeded");
+      await seedReviews();
+      console.log("Reviews seeded");
     }
 
     console.log("Database connected and synced");
