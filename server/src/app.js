@@ -27,7 +27,39 @@ app.use("/reviews", reviewRoutes);
 (async () => {
   try {
     console.log("DATABASE_URL set:", Boolean(process.env.DATABASE_URL));
-    await sequelize.authenticate();
+    if (process.env.DATABASE_URL) {
+      console.log("DATABASE_URL value:", process.env.DATABASE_URL.replace(/:[^:@]+@/, ":****@"));
+    }
+    console.log("NODE_ENV:", process.env.NODE_ENV);
+    console.log("DB_SSL:", process.env.DB_SSL);
+    console.log("Resolved SSL config:", JSON.stringify(sequelize.options.dialectOptions?.ssl));
+    
+    try {
+      await sequelize.authenticate();
+    } catch (err) {
+      console.warn("Database connection failed on first attempt. Retrying with alternative SSL settings...");
+      console.warn("First attempt error:", err.message);
+      
+      const currentSSL = sequelize.dialect.connectionManager?.config?.dialectOptions?.ssl;
+      if (sequelize.dialect && sequelize.dialect.connectionManager) {
+        if (currentSSL) {
+          sequelize.dialect.connectionManager.config.dialectOptions.ssl = false;
+          console.log("Retrying WITHOUT SSL...");
+        } else {
+          sequelize.dialect.connectionManager.config.dialectOptions.ssl = {
+            require: true,
+            rejectUnauthorized: false
+          };
+          console.log("Retrying WITH SSL...");
+        }
+        if (sequelize.dialect.connectionManager.pool) {
+          await sequelize.dialect.connectionManager.pool.destroyAllNow();
+        }
+      }
+      await sequelize.authenticate();
+      console.log("Database connected successfully on retry!");
+    }
+
     await sequelize.sync();
 
     // Seed only if products are empty
