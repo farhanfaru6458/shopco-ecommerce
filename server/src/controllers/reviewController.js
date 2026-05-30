@@ -13,7 +13,7 @@ exports.getHomeReviews = async (req, res) => {
     res.json(reviews);
   } catch (error) {
     console.error("GET HOME REVIEWS ERROR:", error);
-    res.status(500).json({ message: "Failed to fetch reviews" });
+    res.status(500).json({ message: "Failed to fetch reviews", error: error.message });
   }
 };
 
@@ -25,6 +25,7 @@ exports.getReviewsByProduct = async (req, res) => {
     });
     res.json(reviews);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch product reviews" });
+    console.error("GET REVIEWS BY PRODUCT ERROR:", error);
+    res.status(500).json({ message: "Failed to fetch product reviews", error: error.message });
   }
 };

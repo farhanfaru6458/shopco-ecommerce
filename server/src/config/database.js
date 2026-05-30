@@ -4,20 +4,29 @@ const useSSL = process.env.NODE_ENV === "production" || process.env.DB_SSL === "
 const sequelizeOptions = {
   dialect: "postgres",
   logging: false,
-  ...(useSSL
-    ? {
-        dialectOptions: {
+  pool: {
+    max: 5,
+    min: 0,
+    idle: 10000,
+    acquire: 30000,
+    evict: 10000,
+  },
+  dialectOptions: {
+    keepAlive: true,
+    ...(useSSL
+      ? {
           ssl: {
             require: true,
             rejectUnauthorized: false,
           },
-        },
-      }
-    : {}),
+        }
+      : {}),
+  },
 };
 
-const sequelize = process.env.DATABASE_URL
-  ? new Sequelize(process.env.DATABASE_URL, sequelizeOptions)
+const databaseUrl = process.env.DATABASE_URL?.trim();
+const sequelize = databaseUrl
+  ? new Sequelize(databaseUrl, sequelizeOptions)
   : new Sequelize(
       process.env.DB_NAME || "shopco",
       process.env.DB_USER || "postgres",

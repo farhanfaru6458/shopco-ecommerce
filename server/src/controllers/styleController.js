@@ -5,6 +5,7 @@ exports.getDressStyles = async (req, res) => {
     const styles = await DressStyle.findAll();
     res.json(styles);
   } catch (err) {
-    res.status(500).json({ message: "Failed to fetch styles" });
+    console.error("GET STYLES ERROR:", err);
+    res.status(500).json({ message: "Failed to fetch styles", error: err.message });
   }
 };
