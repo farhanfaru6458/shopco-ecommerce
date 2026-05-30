@@ -1,6 +1,12 @@
 const { Sequelize } = require("sequelize");
 
-const useSSL = process.env.NODE_ENV === "production" || process.env.DB_SSL === "true";
+const useSSL =
+  process.env.NODE_ENV === "production" ||
+  process.env.DB_SSL === "true" ||
+  (process.env.DATABASE_URL &&
+    !process.env.DATABASE_URL.includes("localhost") &&
+    !process.env.DATABASE_URL.includes("127.0.0.1") &&
+    process.env.DB_SSL !== "false");
 const sequelizeOptions = {
   dialect: "postgres",
   logging: false,
