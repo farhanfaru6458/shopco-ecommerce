@@ -26,8 +26,9 @@ app.use("/reviews", reviewRoutes);
 
 (async () => {
   try {
+    await sequelize.authenticate();
     await sequelize.sync();
-    
+
     // Seed only if products are empty
     const { Product, DressStyle, Review } = require("./models");
     const productCount = await Product.count();
@@ -43,12 +44,13 @@ app.use("/reviews", reviewRoutes);
       console.log(" Reviews seeded");
     }
 
-    console.log("Database synced");
+    console.log("Database connected and synced");
+
+    app.listen(process.env.PORT || 5000, () =>
+      console.log("Server running on port", process.env.PORT || 5000)
+    );
   } catch (err) {
-    console.error(err);
+    console.error("Database initialization failed:", err);
+    process.exit(1);
   }
 })();
-
-app.listen(process.env.PORT || 5000, () =>
-  console.log(" Server running on port 5000")
-);

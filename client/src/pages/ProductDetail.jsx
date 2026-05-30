@@ -56,18 +56,26 @@ export default function ProductDetail() {
     }
   ];
 
+  const safeArrayResponse = async (res) => {
+    const data = await res.json().catch(() => null);
+    return res.ok && Array.isArray(data) ? data : [];
+  };
+
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      fetch(`https://shopco-ecommerce-1-6ccc.onrender.com/products/${id}`).then(res => res.json()),
-      fetch(`https://shopco-ecommerce-1-6ccc.onrender.com/reviews/product/${id}`).then(res => res.json())
+      fetch(`https://shopco-ecommerce-1-6ccc.onrender.com/products/${id}`).then(async (res) => {
+        if (!res.ok) throw new Error(`Failed to fetch product (${res.status})`);
+        return res.json();
+      }),
+      fetch(`https://shopco-ecommerce-1-6ccc.onrender.com/reviews/product/${id}`).then(safeArrayResponse)
     ])
       .then(([productData, reviewsData]) => {
         setProduct(productData);
         setReviews(reviewsData);
-        setActiveImg(productData.images?.[0] || productData.image);
-        if (productData.colors?.length > 0) setSelectedColor(productData.colors[0]);
-        if (productData.sizes?.length > 0) setSelectedSize(productData.sizes[0]);
+        setActiveImg(productData?.images?.[0] || productData?.image);
+        if (productData?.colors?.length > 0) setSelectedColor(productData.colors[0]);
+        if (productData?.sizes?.length > 0) setSelectedSize(productData.sizes[0]);
       })
       .catch(err => console.error("Error fetching product data:", err))
       .finally(() => setLoading(false));

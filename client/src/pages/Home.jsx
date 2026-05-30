@@ -20,17 +20,25 @@ export default function Home() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const safeArrayResponse = async (res) => {
+    const data = await res.json().catch(() => null);
+    return res.ok && Array.isArray(data) ? data : [];
+  };
+
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      fetch("https://shopco-ecommerce-1-6ccc.onrender.com/products").then(res => res.json()),
-      fetch("https://shopco-ecommerce-1-6ccc.onrender.com/styles").then(res => res.json()),
-      fetch("https://shopco-ecommerce-1-6ccc.onrender.com/reviews/home").then(res => res.json())
+      fetch("https://shopco-ecommerce-1-6ccc.onrender.com/products").then(safeArrayResponse),
+      fetch("https://shopco-ecommerce-1-6ccc.onrender.com/styles").then(safeArrayResponse),
+      fetch("https://shopco-ecommerce-1-6ccc.onrender.com/reviews/home").then(safeArrayResponse)
     ])
       .then(([productsData, stylesData, reviewsData]) => {
         setProducts(productsData);
         setStyles(stylesData);
         setReviews(reviewsData);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch homepage data:", error);
       })
       .finally(() => setLoading(false));
   }, []);
