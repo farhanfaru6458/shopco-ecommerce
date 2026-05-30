@@ -26,6 +26,7 @@ app.use("/reviews", reviewRoutes);
 
 (async () => {
   try {
+    console.log("DATABASE_URL set:", Boolean(process.env.DATABASE_URL));
     await sequelize.authenticate();
     await sequelize.sync();
 
