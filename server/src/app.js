@@ -36,28 +36,63 @@ app.use("/reviews", reviewRoutes);
     
     try {
       await sequelize.authenticate();
-    } catch (err) {
-      console.warn("Database connection failed on first attempt. Retrying with alternative SSL settings...");
-      console.warn("First attempt error:", err.message);
+    } catch (firstErr) {
+      console.warn("Database connection failed on first attempt:", firstErr.message);
       
-      const currentSSL = sequelize.dialect.connectionManager?.config?.dialectOptions?.ssl;
-      if (sequelize.dialect && sequelize.dialect.connectionManager) {
-        if (currentSSL) {
-          sequelize.dialect.connectionManager.config.dialectOptions.ssl = false;
-          console.log("Retrying WITHOUT SSL...");
-        } else {
+      const host = sequelize.config.host || "";
+      let newHost = null;
+      if (host.includes("-a.")) {
+        newHost = host.replace("-a.", ".");
+      } else if (host.endsWith("-a")) {
+        newHost = host.slice(0, -2);
+      }
+      
+      let connected = false;
+      if (newHost) {
+        console.log(`Detected internal Render host. Rewriting to external host: ${newHost} and retrying with SSL...`);
+        sequelize.config.host = newHost;
+        sequelize.options.host = newHost;
+        if (sequelize.dialect && sequelize.dialect.connectionManager) {
+          sequelize.dialect.connectionManager.config.host = newHost;
           sequelize.dialect.connectionManager.config.dialectOptions.ssl = {
             require: true,
             rejectUnauthorized: false
           };
-          console.log("Retrying WITH SSL...");
+          if (sequelize.dialect.connectionManager.pool) {
+            await sequelize.dialect.connectionManager.pool.destroyAllNow();
+          }
         }
-        if (sequelize.dialect.connectionManager.pool) {
-          await sequelize.dialect.connectionManager.pool.destroyAllNow();
+        
+        try {
+          await sequelize.authenticate();
+          console.log("Database connected successfully using external host!");
+          connected = true;
+        } catch (secondErr) {
+          console.warn("Database connection failed on second attempt (external host):", secondErr.message);
         }
       }
-      await sequelize.authenticate();
-      console.log("Database connected successfully on retry!");
+      
+      if (!connected) {
+        console.log("Attempting SSL configuration toggle fallback...");
+        const currentSSL = sequelize.dialect.connectionManager?.config?.dialectOptions?.ssl;
+        if (sequelize.dialect && sequelize.dialect.connectionManager) {
+          if (currentSSL) {
+            sequelize.dialect.connectionManager.config.dialectOptions.ssl = false;
+            console.log("Retrying WITHOUT SSL...");
+          } else {
+            sequelize.dialect.connectionManager.config.dialectOptions.ssl = {
+              require: true,
+              rejectUnauthorized: false
+            };
+            console.log("Retrying WITH SSL...");
+          }
+          if (sequelize.dialect.connectionManager.pool) {
+            await sequelize.dialect.connectionManager.pool.destroyAllNow();
+          }
+        }
+        await sequelize.authenticate();
+        console.log("Database connected successfully on final fallback!");
+      }
     }
 
     await sequelize.sync();
