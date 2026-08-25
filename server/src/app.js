@@ -24,6 +24,13 @@ app.use("/orders", orderRoutes);
 app.use("/styles", styleRoutes);
 app.use("/reviews", reviewRoutes);
 
+
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "ShopCo API is running",
+  });
+});
 (async () => {
   try {
     console.log("DATABASE_URL set:", Boolean(process.env.DATABASE_URL));
